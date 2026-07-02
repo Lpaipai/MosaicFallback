@@ -1,0 +1,9 @@
+bin/
+obj/
+dist/
+.agents/
+.codex/
+*.user
+*.suo
+*.cache
+*.log
