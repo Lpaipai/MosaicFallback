@@ -6,7 +6,7 @@ namespace MosaicFallback;
 
 public sealed class PatternRenderer
 {
-    private const int PatternCount = 5;
+    private const int PatternCount = 6;
     private readonly Font _largeFont = new("Segoe UI", 42, FontStyle.Bold, GraphicsUnit.Pixel);
     private readonly Font _mediumFont = new("Consolas", 26, FontStyle.Regular, GraphicsUnit.Pixel);
     private readonly Font _smallFont = new("Consolas", 18, FontStyle.Regular, GraphicsUnit.Pixel);
@@ -19,6 +19,7 @@ public sealed class PatternRenderer
         2 => "horizontal gradient",
         3 => "vertical gradient",
         4 => "colorbar",
+        5 => "checkerboard",
         _ => "diagnostic home"
     };
 
@@ -53,6 +54,9 @@ public sealed class PatternRenderer
             case 4:
                 DrawColorbarPattern(g, clientBounds);
                 break;
+            case 5:
+                DrawCheckerboardPattern(g, clientBounds);
+                break;
             default:
                 DrawFullDiagnosticPattern(g, clientBounds);
                 DrawScreenFrames(g, layout, showInfo);
@@ -62,18 +66,12 @@ public sealed class PatternRenderer
 
     private void DrawFullDiagnosticPattern(Graphics g, Rectangle bounds)
     {
-        using LinearGradientBrush horizontal = new(bounds, Color.Black, Color.White, LinearGradientMode.Horizontal);
-        g.FillRectangle(horizontal, bounds);
-
-        using LinearGradientBrush vertical = new(bounds, Color.FromArgb(70, 255, 0, 0), Color.FromArgb(70, 0, 0, 255), LinearGradientMode.Vertical);
-        g.FillRectangle(vertical, bounds);
-
-        DrawGrid(g, bounds, 240, Color.FromArgb(95, 255, 255, 255));
-        DrawGrid(g, bounds, 960, Color.FromArgb(180, 255, 255, 0));
+        g.Clear(Color.Black);
+        DrawGrid(g, bounds, 960, Color.FromArgb(70, 120, 120, 120));
         DrawCenterLines(g, bounds);
         DrawPixelLineBlocks(g, bounds);
         DrawRgbBlocks(g, bounds);
-        DrawCheckerboard(g, new Rectangle(bounds.Right - 640, bounds.Bottom - 640, 560, 560), 20);
+        DrawCheckerboard(g, GetBottomRightBlock(bounds), 20, true);
     }
 
     private static void DrawCrossFramePattern(Graphics g, Rectangle bounds)
@@ -124,6 +122,13 @@ public sealed class PatternRenderer
             using SolidBrush brush = new(bars[i]);
             g.FillRectangle(brush, columns[i]);
         }
+    }
+
+    private static void DrawCheckerboardPattern(Graphics g, Rectangle bounds)
+    {
+        g.Clear(Color.Black);
+        int cell = Math.Max(8, Math.Min(bounds.Width, bounds.Height) / 96);
+        DrawCheckerboard(g, bounds, cell, false);
     }
 
     private static Rectangle[] SplitRows(Rectangle bounds, int count)
@@ -206,8 +211,9 @@ public sealed class PatternRenderer
 
     private void DrawPixelLineBlocks(Graphics g, Rectangle bounds)
     {
-        Rectangle block = new(bounds.Left + 80, bounds.Bottom - 720, 720, 560);
+        Rectangle block = new(bounds.Left + 80, bounds.Bottom - 520, 640, 360);
         g.FillRectangle(Brushes.Black, block);
+        g.DrawRectangle(Pens.White, block);
 
         using Pen white = new(Color.White, 1);
         using Pen red = new(Color.Red, 1);
@@ -221,7 +227,7 @@ public sealed class PatternRenderer
         }
 
         g.DrawLine(green, block.Left, block.Top + 250, block.Right, block.Top + 250);
-        g.DrawLine(blue, block.Left + 360, block.Top, block.Left + 360, block.Bottom);
+        g.DrawLine(blue, block.Left + block.Width / 2, block.Top, block.Left + block.Width / 2, block.Bottom);
         DrawLabel(g, "1 pixel H/V line test", block.Left + 18, block.Top + 18, _mediumFont, Color.White);
     }
 
@@ -243,7 +249,13 @@ public sealed class PatternRenderer
         }
     }
 
-    private static void DrawCheckerboard(Graphics g, Rectangle rect, int cell)
+    private static Rectangle GetBottomRightBlock(Rectangle bounds)
+    {
+        int size = Math.Min(420, Math.Max(180, Math.Min(bounds.Width, bounds.Height) / 8));
+        return new Rectangle(bounds.Right - size - 80, bounds.Bottom - size - 160, size, size);
+    }
+
+    private static void DrawCheckerboard(Graphics g, Rectangle rect, int cell, bool drawBorder)
     {
         if (rect.Width <= 0 || rect.Height <= 0)
         {
@@ -261,7 +273,10 @@ public sealed class PatternRenderer
             }
         }
 
-        g.DrawRectangle(Pens.Lime, rect);
+        if (drawBorder)
+        {
+            g.DrawRectangle(Pens.Lime, rect);
+        }
     }
 
     private void DrawScreenFrames(Graphics g, ScreenLayoutInfo layout, bool showInfo)
@@ -292,7 +307,7 @@ public sealed class PatternRenderer
         }
     }
 
-    public void DrawOverlay(Graphics g, ScreenLayoutInfo layout, string text, Point location)
+    public Rectangle DrawOverlay(Graphics g, string text, Point location)
     {
         SizeF size = g.MeasureString(text, _smallFont, 1200);
         RectangleF rect = new(location.X, location.Y, size.Width + 28, size.Height + 24);
@@ -301,6 +316,7 @@ public sealed class PatternRenderer
         g.DrawRectangle(Pens.White, Rectangle.Round(rect));
         using SolidBrush foreground = new(Color.White);
         g.DrawString(text, _smallFont, foreground, new RectangleF(location.X + 14, location.Y + 12, size.Width, size.Height));
+        return Rectangle.Round(rect);
     }
 
     private static void DrawLabel(Graphics g, string text, int x, int y, Font font, Color color)
