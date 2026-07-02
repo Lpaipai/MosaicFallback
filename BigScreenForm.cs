@@ -158,6 +158,9 @@ public sealed class BigScreenForm : Form, IMessageFilter
 
     private bool HandleShortcutKey(Keys keyCode)
     {
+        bool hasImage = _image is not null;
+        bool hasVideo = _videoPath is not null;
+
         switch (keyCode)
         {
             case Keys.Escape:
@@ -192,33 +195,33 @@ public sealed class BigScreenForm : Form, IMessageFilter
                 ToggleHelp();
                 return true;
             case Keys.Up:
-                if (_imagePath is not null)
+                if (hasImage)
                 {
                     SwitchImage(-1);
                     return true;
                 }
 
-                if (_videoPath is null)
+                if (!hasVideo)
                 {
                     PreviousPattern();
                     return true;
                 }
 
-                return false;
+                return true;
             case Keys.Down:
-                if (_imagePath is not null)
+                if (hasImage)
                 {
                     SwitchImage(1);
                     return true;
                 }
 
-                if (_videoPath is null)
+                if (!hasVideo)
                 {
                     NextPattern();
                     return true;
                 }
 
-                return false;
+                return true;
             case Keys.Left:
                 SeekVideoBy(-VideoSeekStep);
                 return _videoPath is not null;
@@ -296,11 +299,25 @@ public sealed class BigScreenForm : Form, IMessageFilter
     {
         if (e.Delta > 0)
         {
-            PreviousPattern();
+            if (_image is not null)
+            {
+                SwitchImage(-1);
+            }
+            else if (_videoPath is null)
+            {
+                PreviousPattern();
+            }
         }
         else if (e.Delta < 0)
         {
-            NextPattern();
+            if (_image is not null)
+            {
+                SwitchImage(1);
+            }
+            else if (_videoPath is null)
+            {
+                NextPattern();
+            }
         }
     }
 
@@ -1070,6 +1087,10 @@ public sealed class BigScreenForm : Form, IMessageFilter
         {
             ToggleVideoPlayback();
         }
+        else if (_image is not null)
+        {
+            SwitchImage(1);
+        }
         else
         {
             NextPattern();
@@ -1101,7 +1122,7 @@ public sealed class BigScreenForm : Form, IMessageFilter
     {
         StringBuilder builder = new();
         builder.AppendLine("快捷键：Esc/Q 退出 | O 打开图片 | V 打开视频 | 空格播放/暂停 | I 信息 | S 原始/拉伸 | P Pattern | ↑/↓ 图片或Pattern | ←/→ 视频进度 | F 置顶 | R 重检屏幕 | H 帮助");
-        builder.AppendLine("鼠标：单击切换 Pattern/播放暂停 | 双击打开图片或视频 | 右键菜单 | 滚轮切换 Pattern");
+        builder.AppendLine("鼠标：单击切换图片或 Pattern/播放暂停 | 双击打开图片或视频 | 右键菜单 | 滚轮切换图片或 Pattern");
         builder.AppendLine($"虚拟桌面：X={_layout.VirtualBounds.Left}, Y={_layout.VirtualBounds.Top}, W={_layout.VirtualBounds.Width}, H={_layout.VirtualBounds.Height}");
         builder.AppendLine($"模式：{GetModeText()} ({_patternRenderer.PatternName})");
         builder.AppendLine($"图片：{(_imagePath ?? "未选择")}");
