@@ -114,7 +114,7 @@ dist\MosaicFallback.exe
 
 ### 视频画面没有铺满
 
-视频默认和图片一样按原始尺寸 pixel-to-pixel 显示，左上角对齐；如果视频小于虚拟桌面，周围黑边是正常现象。按 `S` 可切换为拉伸铺满完整虚拟桌面。
+视频默认和图片一样按原始尺寸 pixel-to-pixel 显示，左上角对齐；如果视频小于虚拟桌面，周围黑边是正常现象。按 `S` 可切换为拉伸铺满完整虚拟桌面。视频播放走 Windows/WPF 媒体管线，程序会把视频自然像素和虚拟桌面物理像素按 WPF 当前 DPI scale 转换成 DIP，避免 Windows 缩放不是 100% 时把视频再次放大后只裁出左上角。
 
 ### 视频模式下看不到帮助或信息
 
@@ -122,7 +122,7 @@ dist\MosaicFallback.exe
 
 ### 坐标或像素不一致
 
-程序启动时调用 `Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)`，项目设置 `ApplicationHighDpiMode=PerMonitorV2`，窗体设置 `AutoScaleMode = None`。为了严格像素对应，建议所有屏幕 Windows 缩放比例都设为 `100%`。
+程序启动时调用 `Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)`，项目设置 `ApplicationHighDpiMode=PerMonitorV2`，窗体设置 `AutoScaleMode = None`。视频模式下按 `H` 或 `I` 可以查看当前视频 DPI scale；原始视频尺寸会按该 scale 换算后显示为物理像素尺寸。为了跨屏严格像素对应，仍建议所有屏幕 Windows 缩放比例都设为 `100%`；如果多屏缩放比例不一致，Windows/WPF 的混合 DPI 行为仍可能影响跨屏逐像素一致性。
 
 ### 图片文件被占用
 

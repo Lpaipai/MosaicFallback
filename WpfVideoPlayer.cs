@@ -68,6 +68,10 @@ public sealed class WpfVideoPlayer : IDisposable
 
     public DrawingSize NaturalSize { get; private set; }
 
+    public double DpiScaleX { get; private set; } = 1.0;
+
+    public double DpiScaleY { get; private set; } = 1.0;
+
     public bool IsPlaying { get; private set; }
 
     public TimeSpan Position
@@ -144,21 +148,39 @@ public sealed class WpfVideoPlayer : IDisposable
         }
 
         _host.Bounds = hostBounds;
-        _root.Width = hostBounds.Width;
-        _root.Height = hostBounds.Height;
+        UpdateDpiScale();
+        _root.Width = ToDeviceIndependentPixels(hostBounds.Width, DpiScaleX);
+        _root.Height = ToDeviceIndependentPixels(hostBounds.Height, DpiScaleY);
 
         if (stretch || NaturalSize.IsEmpty)
         {
             _mediaElement.Stretch = Stretch.Fill;
-            _mediaElement.Width = hostBounds.Width;
-            _mediaElement.Height = hostBounds.Height;
+            _mediaElement.Width = ToDeviceIndependentPixels(hostBounds.Width, DpiScaleX);
+            _mediaElement.Height = ToDeviceIndependentPixels(hostBounds.Height, DpiScaleY);
         }
         else
         {
             _mediaElement.Stretch = Stretch.None;
-            _mediaElement.Width = NaturalSize.Width;
-            _mediaElement.Height = NaturalSize.Height;
+            _mediaElement.Width = ToDeviceIndependentPixels(NaturalSize.Width, DpiScaleX);
+            _mediaElement.Height = ToDeviceIndependentPixels(NaturalSize.Height, DpiScaleY);
         }
+    }
+
+    private void UpdateDpiScale()
+    {
+        DpiScale dpi = VisualTreeHelper.GetDpi(_root);
+        DpiScaleX = NormalizeDpiScale(dpi.DpiScaleX);
+        DpiScaleY = NormalizeDpiScale(dpi.DpiScaleY);
+    }
+
+    private static double ToDeviceIndependentPixels(int physicalPixels, double dpiScale)
+    {
+        return Math.Max(1.0, physicalPixels / NormalizeDpiScale(dpiScale));
+    }
+
+    private static double NormalizeDpiScale(double dpiScale)
+    {
+        return double.IsFinite(dpiScale) && dpiScale > 0 ? dpiScale : 1.0;
     }
 
     public void Seek(TimeSpan position)

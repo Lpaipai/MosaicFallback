@@ -1134,6 +1134,7 @@ public sealed class BigScreenForm : Form, IMessageFilter
         if (_videoPath is not null)
         {
             builder.AppendLine($"视频尺寸：{(_videoPlayer.NaturalSize.IsEmpty ? "未知" : $"{_videoPlayer.NaturalSize.Width} x {_videoPlayer.NaturalSize.Height}")}");
+            builder.AppendLine($"视频 DPI：{_videoPlayer.DpiScaleX:0.###} x {_videoPlayer.DpiScaleY:0.###}");
             builder.AppendLine($"视频状态：{(_videoPlayer.IsPlaying ? "播放" : "暂停")}");
             builder.AppendLine($"视频进度：{FormatTime(_videoPlayer.Position)} / {FormatTime(_videoPlayer.Duration)}");
         }
